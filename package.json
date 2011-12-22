@@ -7,7 +7,7 @@
 , "version"         : "0.1.0"
 , "engines"         : {"node": ">=0.4.0"}
 , "main"            : "./lib/faye/websocket"
-, "devDependencies" : {"faye": ">=0.5.0"}
+, "devDependencies" : {"faye": ">=0.7.1"}
 
 , "bugs"            : "http://github.com/faye/faye-cluster-node/issues"
 

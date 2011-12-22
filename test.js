@@ -1,5 +1,5 @@
 var faye    = require('faye'),
-    Cluster = require('./lib/faye/cluster');
+    cluster = require('./lib/faye/cluster');
 
 var makeServer = function(port) {
   var server = new faye.NodeAdapter({mount: '/faye', timeout: 60});
@@ -16,16 +16,15 @@ var sA = makeServer(8000),
     sB = makeServer(8001);
 
 // Add the cluster extension to each server
-var eA = new Cluster('http://localhost:8000/faye'),
-    eB = new Cluster('http://localhost:8001/faye');
+var eA = new cluster.Node('http://localhost:8000/faye'),
+    eB = new cluster.Node('http://localhost:8001/faye');
     
 sA.addExtension(eA);
 sB.addExtension(eB);
 
-// Connect extension B to server A
+// Connect extension A to server B
 process.nextTick(function() {
   eA.connect('http://localhost:8001/faye');
-  eB.connect('http://localhost:8000/faye');
 });
 
 setTimeout(function() {
@@ -33,11 +32,16 @@ setTimeout(function() {
   var cA = makeClient(8000),
       cB = makeClient(8001);
   
-  // Subscribe to a channel on the first server
-  var sub = cA.subscribe('/msg', function(m) { console.log('A', m) });
+  // Make clients subscribe to channels on their respective servers
+  var subA = cA.subscribe('/msg/a', function(m) { console.log('A', m) }),
+      subB = cB.subscribe('/msg/b', function(m) { console.log('B', m) });
   
-  sub.callback(function() {
-    // Publish to a channel on the second server
-    cB.publish('/msg', {hello: 'world'});
+  subA.callback(function() {
+    subB.callback(function() {
+      // Send messages between both clients
+      cA.publish('/msg/b', {hello: 'world'});
+      cB.publish('/msg/a', {hello: 'world'});
+    });
   });
 }, 100);
+
